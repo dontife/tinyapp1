@@ -4,7 +4,7 @@ const app = express();
 const PORT = 8080;
 
 const urlDatabase = {
-  "b2xVn2" : 'http://www.lighthouselabs.ca',
+  'b2xVn2' : 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
 
 };
@@ -12,7 +12,10 @@ const urlDatabase = {
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
-
+app.get('/urls.json', (req, res) => {
+  // sends a JSON response
+  res.json(urlDatabase);
+});
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
