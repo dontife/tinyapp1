@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const req = require('express/lib/request');
 const app = express();
 // default port 8080
 const PORT = 8080;
@@ -34,7 +35,7 @@ app.post('/urls', (req,res) => {
   urlDatabase[shortURL] = req.body.longURL
   console.log(urlDatabase);
   // redirect after submission
-  res.redirect(`/urls/:${shortURL}`);
+  res.redirect(`/urls/${shortURL}`);
 });
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL]};
@@ -47,6 +48,13 @@ app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[shortURL] ;
  res.status(301).redirect(longURL);
 });
+
+// Delete an URL
+app.post('/urls/:shortURL/delete', (req, res) => {
+  let shortDel = req.params.shortURL;
+  delete urlDatabase[shortDel];
+  return res.redirect('/urls');
+})
 
 app.get('/hello', (req, res) => {
   res.send('<html><body> Hello <b>World</b></body></html>\n');
