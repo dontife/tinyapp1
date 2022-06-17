@@ -30,12 +30,22 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
 app.post('/urls', (req,res) => {
-  console.log(req.body);
-  res.send('Ok');
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL
+  console.log(urlDatabase);
+  // redirect after submission
+  res.redirect(`/urls/:${shortURL}`);
 });
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
+});
+
+app.get('/u/:shortURL', (req, res) => {
+  // const longURL = ...
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL] ;
+ res.status(301).redirect(longURL);
 });
 
 app.get('/hello', (req, res) => {
