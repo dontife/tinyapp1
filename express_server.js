@@ -1,9 +1,11 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const req = require('express/lib/request');
 const app = express();
 // default port 8080
 const PORT = 8080;
+app.use(cookieParser()); 
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 const urlDatabase = {
@@ -37,10 +39,18 @@ app.post('/urls', (req,res) => {
   // redirect after submission
   res.redirect(`/urls/${shortURL}`);
 });
+
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
 });
+
+// updating URLs
+app.post('/urls/:shortURL', (req, res) => {
+  const longerURL = req.body.longerURL;
+  urlDatabase[req.params.shortURL] = longerURL;
+  return res.redirect('/urls');
+})
 
 app.get('/u/:shortURL', (req, res) => {
   // const longURL = ...
