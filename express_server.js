@@ -36,6 +36,13 @@ app.get('/urls/new', (req, res) => {
   };
   res.render('urls_new', templateVars);
 });
+// endpoint to create a new account 
+app.get('/register', (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render('register', templateVars);
+})
 app.post('/urls', (req,res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
