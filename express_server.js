@@ -1,5 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const { ifUserExists } = require("./helperFunction");
 const bodyParser = require('body-parser');
 const req = require('express/lib/request');
 const app = express();
@@ -86,22 +87,23 @@ app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
-
+// Create a new account
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = generateRandomString();
-
-  const newUser = {
-    id,
-    email,
-    password,
+  if (!email || !password) {
+    return res.status(400).send('Please provide a valid email and password');
+  };
+  // checking to see if username exists 
+  let userExists = ifUserExists(email, users);
+  if(userExists) {
+    return res.status(400).send('Please provide another email, inputted email is in use');
   };
   users[id] = {id, email, password}
-  //res.cookie('username', email);
   res.cookie('user_id', id);
   res.redirect('/urls')
-})
+});
 
 app.get('/urls/:shortURL', (req, res) => {
   const userID = req.cookies['user_id'];
