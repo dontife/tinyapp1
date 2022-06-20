@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
 const { ifUserExists, ifPasswordMatches,  urlsForUser} = require("./helperFunction");
 const bodyParser = require('body-parser');
@@ -24,12 +25,13 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
   },
+  
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 };
 // generating a random unique number
@@ -141,7 +143,9 @@ app.post('/register', (req, res) => {
   if(userExists) {
     return res.status(400).send('Please provide another email, inputted email is in use');
   };
-  users[id] = {id, email, password}
+  const hashPassword = bcrypt.hashSync(password, 10);
+  const newUser = { id, email, password: hashPassword} ;
+  users[id] = newUser;
   res.cookie('user_id', id);
   res.redirect('/urls')
 });

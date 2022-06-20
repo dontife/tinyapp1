@@ -1,3 +1,5 @@
+const bcrypt = require("bcryptjs");
+
 // checking for an email in the users object
 const ifUserExists = function(email, database) {
  for(const user in database) {
@@ -13,7 +15,7 @@ const ifUserExists = function(email, database) {
 const ifPasswordMatches = function(email, password, database) {
   for (const user in database) {
     if (database[user].email === email) {
-      if (password === database[user].password) {
+      if (bcrypt.compareSync(password, database[user].password)) {
         return database[user];
       }
     }
