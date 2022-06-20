@@ -1,6 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const { ifUserExists } = require("./helperFunction");
+const { ifUserExists, ifPasswordMatches} = require("./helperFunction");
 const bodyParser = require('body-parser');
 const req = require('express/lib/request');
 const app = express();
@@ -62,7 +62,6 @@ app.get('/register', (req, res) => {
   const user = users[userID];
   const templateVars = {
     user,
-    //username: req.cookies["username"]
   };
   res.render('register', templateVars);
 });
@@ -87,24 +86,40 @@ app.post('/urls', (req,res) => {
 });
 // login route to cookies
 app.post('/login', (req,res) => {
-  //res.cookie('username', req.body.username);
-  res.redirect('/urls');
-
+  const email = req.body.email;
+  const password = req.body.password;
+  // checks if the email or password field is empty
+  if (!email || !password) {
+    return res.status(400).send('Please provide a valid email and password');
+  };
+    // checking to see if email exists 
+  let userExists = ifUserExists(email, users);
+  if (!userExists) {
+    return res.status(403).send(`403: Email cannot be found.`)
+  }
+  let passwordExists = ifPasswordMatches(email, password, users);
+  if (passwordExists) {
+    res.cookie("user_id", passwordExists.id);
+  return res.redirect('/urls');
+  } else {
+    return res.status(403).send(`403: The password provided is wrong.`);
+  }
 });
 // logout route
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 // Create a new account
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const id = generateRandomString();
+  // checks if the email or password field is empty
   if (!email || !password) {
     return res.status(400).send('Please provide a valid email and password');
   };
-  // checking to see if username exists 
+  // checking to see if user exists 
   let userExists = ifUserExists(email, users);
   if(userExists) {
     return res.status(400).send('Please provide another email, inputted email is in use');
