@@ -1,6 +1,6 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const { ifUserExists, ifPasswordMatches} = require("./helperFunction");
+const { ifUserExists, ifPasswordMatches,  urlsForUser} = require("./helperFunction");
 const bodyParser = require('body-parser');
 const req = require('express/lib/request');
 const app = express();
@@ -16,7 +16,7 @@ const urlDatabase = {
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW"
+    userID: "aJ43lW"
   }
 
 };
@@ -49,8 +49,13 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
   const userID = req.cookies['user_id'];
   const user = users[userID];
-  const templateVars = { user, urls : urlDatabase };
-  res.render('urls_index', templateVars);
+  const templateVars = { user, urls: urlsForUser(userID, urlDatabase) };
+  if (!userID) {
+    return res.send("You don't have permission, please login or register.");
+  }
+  if(urlsForUser(userID, urlDatabase)){
+    res.render('urls_index', templateVars);
+  }
 });
 // new page 
 app.get('/urls/new', (req, res) => {

@@ -20,4 +20,15 @@ const ifPasswordMatches = function(email, password, database) {
   }
   return undefined;
 };
-module.exports = {ifUserExists, ifPasswordMatches, }
+
+// returns URLs where the userID is equal to the id currently logged-in user
+const urlsForUser = function (id, database) {
+  let urls = {};
+  for (let url in database) {
+    if (database[url].userID === id) {
+      urls[url] = database[url];
+    }
+  }
+  return urls;
+}
+module.exports = {ifUserExists, ifPasswordMatches, urlsForUser,}
