@@ -10,8 +10,14 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 const urlDatabase = {
-  'b2xVn2' : 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com'
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 
 };
 const users = {
@@ -86,9 +92,9 @@ app.post('/urls', (req,res) => {
     return res.send("You don't have permission, please login or register.");
   }
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] ={longURL: req.body.longURL, userID: req.cookies["user_id"]};;
   // redirect after submission
-  res.redirect(`/urls/${shortURL}`);
+  res.redirect(`/urls`);
 });
 // login route to cookies
 app.post('/login', (req,res) => {
@@ -136,26 +142,32 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+  if (!urlDatabase.hasOwnProperty(shortURL)) {
+    return res.status(404).send("The page requested was not found");
+  }
   const userID = req.cookies['user_id'];
   const user = users[userID];
-  const templateVars = { shortURL: req.params.shortURL , longURL: urlDatabase[req.params.shortURL], user,};
+  const templateVars = { shortURL: req.params.shortURL , longURL:urlDatabase[req.params.shortURL].longURL, user,};
   res.render('urls_show', templateVars);
 });
 
 // updating URLs
 app.post('/urls/:shortURL', (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.status(401).send("You don't have permission, please login or register.");
+  }
   const longerURL = req.body.longerURL;
-  urlDatabase[req.params.shortURL] = longerURL;
+  urlDatabase[req.params.shortURL].longURL = longerURL;
   return res.redirect('/urls');
 });
 
 app.get('/u/:shortURL', (req, res) => {
-  if (!req.cookies["user_id"]) {
-    return res.send("You don't have permission, please login or register.");
-  }
-  // const longURL = ...
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  if (!urlDatabase.hasOwnProperty(shortURL)) {
+    return res.status(404).send("The page requested was not found");
+  }
+  const longURL = urlDatabase[shortURL].longURL;
   res.status(301).redirect(longURL);
 });
 
