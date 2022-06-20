@@ -66,6 +66,15 @@ app.get('/register', (req, res) => {
   };
   res.render('register', templateVars);
 });
+// login page
+app.get('/login', (req, res) => {
+  const userID = req.cookies['user_id'];
+  const user = users[userID];
+  const templateVars = {
+    user,
+  };
+  res.render("login", templateVars);
+});
 
 // endpoints using the post method
 
