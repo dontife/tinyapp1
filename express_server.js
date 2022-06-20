@@ -1,15 +1,21 @@
-const express = require('express');
 const bcrypt = require('bcryptjs');
-const cookieParser = require('cookie-parser');
+//var cookieParser = require('cookie-parser')
+const  cookieSession = require('cookie-session')
 const { ifUserExists, ifPasswordMatches,  urlsForUser} = require("./helperFunction");
 const bodyParser = require('body-parser');
+const express = require('express');
 const req = require('express/lib/request');
 const app = express();
 // default port 8080
 const PORT = 8080;
-app.use(cookieParser());
+//app.use(cookieParser())
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secret'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -49,8 +55,10 @@ app.get('/urls.json', (req, res) => {
 });
 // index page
 app.get('/urls', (req, res) => {
-  const userID = req.cookies['user_id'];
+  //const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
+  console.log(req.session);
   const templateVars = { user, urls: urlsForUser(userID, urlDatabase) };
   if (!userID) {
     return res.send("You don't have permission, please login or register.");
@@ -61,7 +69,8 @@ app.get('/urls', (req, res) => {
 });
 // new page 
 app.get('/urls/new', (req, res) => {
-  const userID = req.cookies['user_id'];
+  //const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   // only registered and logged users can createa new tiny URLs
   if (!userID) {
@@ -75,7 +84,9 @@ app.get('/urls/new', (req, res) => {
 });
 // endpoint to create a new account
 app.get('/register', (req, res) => {
-  const userID = req.cookies['user_id'];
+  console.log(req.body);
+  //const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = {
     user,
@@ -84,7 +95,8 @@ app.get('/register', (req, res) => {
 });
 // login page
 app.get('/login', (req, res) => {
-  const userID = req.cookies['user_id'];
+  //const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
   const user = users[userID];
   const templateVars = {
     user,
@@ -95,11 +107,11 @@ app.get('/login', (req, res) => {
 // endpoints using the post method
 
 app.post('/urls', (req,res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("You don't have permission, please login or register.");
   }
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] ={longURL: req.body.longURL, userID: req.cookies["user_id"]};;
+  urlDatabase[shortURL] ={longURL: req.body.longURL, userID: req.session.user_id };;
   // redirect after submission
   res.redirect(`/urls`);
 });
@@ -118,6 +130,7 @@ app.post('/login', (req,res) => {
   }
   let passwordExists = ifPasswordMatches(email, password, users);
   if (passwordExists) {
+    req.session.user_id =  passwordExists.id;
     res.cookie("user_id", passwordExists.id);
   return res.redirect('/urls');
   } else {
@@ -126,7 +139,8 @@ app.post('/login', (req,res) => {
 });
 // logout route
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  //res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/login');
 });
 // Create a new account
@@ -146,6 +160,7 @@ app.post('/register', (req, res) => {
   const hashPassword = bcrypt.hashSync(password, 10);
   const newUser = { id, email, password: hashPassword} ;
   users[id] = newUser;
+  req.session.user_id = id;
   res.cookie('user_id', id);
   res.redirect('/urls')
 });
@@ -155,7 +170,8 @@ app.get('/urls/:shortURL', (req, res) => {
   if (!urlDatabase.hasOwnProperty(shortURL)) {
     return res.status(404).send("The page requested was not found");
   }
-  const userID = req.cookies['user_id'];
+  const userID = req.session.user_id;
+  
   const user = users[userID];
   const templateVars = { shortURL: req.params.shortURL , longURL:urlDatabase[req.params.shortURL].longURL, user,};
   res.render('urls_show', templateVars);
@@ -163,7 +179,7 @@ app.get('/urls/:shortURL', (req, res) => {
 
 // updating URLs
 app.post('/urls/:shortURL', (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.status(401).send("You don't have permission, please login or register.");
   }
   const longerURL = req.body.longerURL;
@@ -182,7 +198,7 @@ app.get('/u/:shortURL', (req, res) => {
 
 // Delete an URL
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     return res.send("You don't have permission, please login or register.");
   }
   let shortDel = req.params.shortURL;
