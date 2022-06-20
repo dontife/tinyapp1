@@ -50,6 +50,10 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const userID = req.cookies['user_id'];
   const user = users[userID];
+  // only registered and logged users can createa new tiny URLs
+  if (!userID) {
+    res.redirect('/login');
+  }
   const templateVars = {
     user,
     // ... any other vars
@@ -78,9 +82,11 @@ app.get('/login', (req, res) => {
 // endpoints using the post method
 
 app.post('/urls', (req,res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("You don't have permission, please login or register.");
+  }
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  console.log(urlDatabase);
   // redirect after submission
   res.redirect(`/urls/${shortURL}`);
 });
@@ -144,6 +150,9 @@ app.post('/urls/:shortURL', (req, res) => {
 });
 
 app.get('/u/:shortURL', (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("You don't have permission, please login or register.");
+  }
   // const longURL = ...
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
@@ -152,6 +161,9 @@ app.get('/u/:shortURL', (req, res) => {
 
 // Delete an URL
 app.post('/urls/:shortURL/delete', (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.send("You don't have permission, please login or register.");
+  }
   let shortDel = req.params.shortURL;
   delete urlDatabase[shortDel];
   return res.redirect('/urls');
